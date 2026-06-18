@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery Release Notes Explorer</title>
+    <meta name="description" content="A premium, interactive dashboard for exploring and searching Google Cloud BigQuery release notes.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <!-- Glassmorphic Glowing Background Orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <svg class="bq-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2005/Atom">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 6h-4v2h4v2h-4v2h4v2H9V7h6v2z" fill="currentColor"/>
+                    </svg>
+                    <span class="logo-text">BigQuery<span class="highlight">Notes</span></span>
+                </div>
+                <p class="logo-sub">GCP Release Notes Explorer</p>
+            </div>
+
+            <div class="stats-card">
+                <h3 class="section-title">Overview</h3>
+                <div class="stat-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-days">0</span>
+                        <span class="stat-label">Active Days</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="total-updates">0</span>
+                        <span class="stat-label">Updates</span>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <h3 class="section-title">Filters</h3>
+                
+                <div class="search-box">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Search keywords..." autocomplete="off">
+                    <button id="clear-search" class="clear-btn" style="display:none;">&times;</button>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-label">Update Type</span>
+                    <div class="type-filters" id="type-filters-container">
+                        <button class="type-filter-btn active" data-type="all">
+                            <span class="dot all-dot"></span> All Updates
+                        </button>
+                        <button class="type-filter-btn" data-type="Feature">
+                            <span class="dot feature-dot"></span> Features
+                        </button>
+                        <button class="type-filter-btn" data-type="Announcement">
+                            <span class="dot announcement-dot"></span> Announcements
+                        </button>
+                        <button class="type-filter-btn" data-type="Issue">
+                            <span class="dot issue-dot"></span> Issues
+                        </button>
+                        <button class="type-filter-btn" data-type="Deprecation">
+                            <span class="dot deprecation-dot"></span> Deprecations
+                        </button>
+                        <button class="type-filter-btn" data-type="General">
+                            <span class="dot general-dot"></span> Other
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-label">Sort Order</span>
+                    <div class="sort-toggle">
+                        <button id="sort-newest" class="sort-btn active">Newest First</button>
+                        <button id="sort-oldest" class="sort-btn">Oldest First</button>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button id="refresh-btn" class="refresh-action-btn">
+                    <svg class="refresh-icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                    Fetch Latest
+                </button>
+                <div class="cache-status" id="cache-time-info">Checking cache...</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-titles">
+                    <h1>BigQuery Release Notes</h1>
+                    <p>Real-time updates, announcements, features, and fixes straight from the Google Cloud Platform RSS feed.</p>
+                </div>
+                <div class="theme-toggle">
+                    <!-- Modern light/dark toggle if needed, defaulted to beautiful dark -->
+                    <span class="badge feed-badge">Live Feed</span>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Loader -->
+                <div class="loader-container" id="feed-loader">
+                    <div class="glow-spinner"></div>
+                    <p>Fetching release notes from Google Cloud...</p>
+                </div>
+
+                <!-- Error Alert -->
+                <div class="error-container" id="feed-error" style="display: none;">
+                    <div class="error-icon">⚠️</div>
+                    <div class="error-details">
+                        <h3>Failed to load release notes</h3>
+                        <p id="error-message">An unknown error occurred while retrieving the feed.</p>
+                        <button id="retry-btn" class="btn btn-primary">Try Again</button>
+                    </div>
+                </div>
+
+                <!-- Feed Content Area -->
+                <div id="feed-timeline" class="feed-timeline" style="display: none;">
+                    <!-- Appended dynamically via JS -->
+                </div>
+
+                <!-- No Results -->
+                <div class="no-results-container" id="no-results" style="display: none;">
+                    <svg class="empty-icon" viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        <line x1="8" y1="11" x2="14" y2="11"></line>
+                    </svg>
+                    <h3>No matching updates found</h3>
+                    <p>Try refining your search query or choosing a different filter category.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
